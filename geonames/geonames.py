@@ -10,7 +10,7 @@ import fiona
 
 # Increasing file size limit will prevent the error:
 # _csv.Error: field larger than field limit (131072)
-csv.field_size_limit(sys.maxsize)
+csv.field_size_limit(100000)
 
 
 
