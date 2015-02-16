@@ -3,7 +3,6 @@
 
 import sys
 import os
-import geonames
 
 try:
     from setuptools import setup
@@ -13,7 +12,7 @@ except ImportError:
 requires = ['unicodecsv>=0.9.4']
 
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist --formats=gztar upload')
+    os.system('python setup.py sdist bdist_wheel upload')
     sys.exit()
 
 with open('README.md') as f:
@@ -21,7 +20,7 @@ with open('README.md') as f:
 
 setup(
     name='geonames',
-    version=geonames.__version__,
+    version='0.1.2',
     long_description=readme,
     description="Geonames data parser into Shapefile/KML",
     author='Denis Carriere',
