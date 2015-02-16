@@ -15,7 +15,7 @@ Geonames is an Apache2 Licensed Geocoding library, written in Python.
 """
 
 __title__ = 'geonames'
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Denis Carriere'
 __copyright__ = 'Copyright 2014 Denis Carriere'
 
