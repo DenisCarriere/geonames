@@ -8,10 +8,10 @@ import unicodecsv
 from lookup_table import feature_code, country_code
 import fiona
 
+
 # Increasing file size limit will prevent the error:
 # _csv.Error: field larger than field limit (131072)
 csv.field_size_limit(100000)
-
 
 
 class Geonames(object):
@@ -60,12 +60,14 @@ class Geonames(object):
                 'modification_date'
             ]
 
-            reader = unicodecsv.DictReader(f, fieldnames=fieldnames, dialect='excel-tab', encoding='utf-8')
+            reader = unicodecsv.DictReader(f, fieldnames=fieldnames,
+                                           dialect='excel-tab',
+                                           encoding='utf-8')
 
             for row in reader:
                 # Main Lookup
                 lookup_f_code = feature_code.get(row['feature_code'])
-                lookup_country = country_code.get(row['country_code']) 
+                lookup_country = country_code.get(row['country_code'])
 
                 # Derived Fields
                 # Feature Class Lookup
@@ -100,7 +102,7 @@ class Geonames(object):
                     y = float(row['y'])
                 except:
                     x, y = 0.0, 0.0
-                    
+
                 # Make Numbers
                 try:
                     geonameid = int(row['geonameid'])
@@ -143,17 +145,81 @@ class Geonames(object):
                     'geometry': geometry,
                     'properties': properties,
                 }
-                # Add the feature inside Container to retrieve later on when exporting
+                # Add the feature to retrieve later on when exporting
                 self.container.append(feature)
 
-    def export(self, path):
-        folder, file_name = os.path.split(path)
+    def make_folder(self, folder):
         if folder:
             if not os.path.exists(folder):
                 os.mkdir(folder)
 
+    def export_csv(self, path):
+        path = path + '_place.csv'
+        folder, file_name = os.path.split(path)
+        self.make_folder(folder)
+        fieldnames = [
+            'name',
+            'place',
+            'population',
+            'admin_level',
+            'x',
+            'y',
+            'geonames:id',
+            'geonames:feature_code',
+        ]
+        lookup_place = {
+            'PPLX': 'suburb',
+            'PPL': 'village',
+            'PPLA': 'town',
+            'PPLA2': 'town',
+            'PPLA3': 'city',
+            'PPLC': 'capital',
+        }
+        lookup_admin_level = {
+            'PPLX': 9,
+            'PPL': 8,
+            'PPLA': 8,
+            'PPLA2': 8,
+            'PPLA3': 8,
+            'PPLC': 6,
+        }
+        with open(path, 'wb') as f:
+            writer = unicodecsv.DictWriter(f, fieldnames=fieldnames,
+                                           extrasaction='ignore',
+                                           encoding='utf-8')
+            writer.writeheader()
+            for feature in self.container:
+                f_code_id = feature['properties']['f_code_id']
+                place = lookup_place.get(f_code_id)
+                name = feature['properties']['name']
+                osm_feature = {
+                    'place': place,
+                    'admin_level': lookup_admin_level.get(f_code_id),
+                    'x': feature['geometry']['coordinates'][0],
+                    'y': feature['geometry']['coordinates'][1],
+                    'name': name,
+                    'geonames:feature_code': f_code_id,
+                    'geonames:id': feature['properties']['geonameid']
+                }
+                population = feature['properties']['population']
+                if population:
+                    osm_feature['population'] = population
+
+                if osm_feature['place']:
+                    # Convert places according to population count
+                    if bool(population > 10000 and place == 'village'):
+                        osm_feature['place'] = 'town'
+                    if bool(population > 100000 and not place in ['suburb', 'capital']):
+                        osm_feature['place'] = 'city'
+                    writer.writerow(osm_feature)
+
+    def export_shp(self, path):
+        path = path + '.shp'
+        folder, file_name = os.path.split(path)
+        self.make_folder(folder)
+
         encoding = 'utf-8'
-        crs = {'init':'epsg:4326'}
+        crs = {'init': 'epsg:4326'}
         driver = 'ESRI Shapefile'
         properties = [
             ('geonameid', 'int'),
@@ -171,20 +237,20 @@ class Geonames(object):
             ('dem', 'int'),
         ]
         schema = {
-            'geometry':'Point',
+            'geometry': 'Point',
             'properties': properties
         }
 
-        with fiona.open(
-            path, 'w', 
-            driver=driver, 
-            schema=schema, 
-            crs=crs, 
-            encoding=encoding) as sink:
+        with fiona.open(path, 'w',
+                        driver=driver,
+                        schema=schema,
+                        crs=crs,
+                        encoding=encoding) as sink:
             for feature in self.container:
                 sink.write(feature)
 
 if __name__ == '__main__':
-    geonames = Geonames('/home/ubuntu/Downloads/VI.txt')
-    geonames.export('/home/ubuntu/Downloads/VI.shp')
+    geonames = Geonames('C:\Users\GEO_Admin\Downloads\JM\JM.txt')
+    geonames.export_csv('C:\Users\GEO_Admin\Downloads\JM\JM')
     print geonames
+
