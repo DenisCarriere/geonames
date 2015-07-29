@@ -15,7 +15,7 @@ if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist bdist_wheel upload')
     sys.exit()
 
-with open('README.md') as f:
+with open('README.rst') as f:
     readme = f.read()
 
 setup(
@@ -26,7 +26,7 @@ setup(
     author='Denis Carriere',
     author_email='carriere.denis@gmail.com',
     url='http://addxy.com',
-    download_url='https://github.com/DenisCarriere/geonames/tarball/master',
+    download_url='https://github.com/DenisCarriere/geonames',
     packages=['geonames'],
     package_data={'': ['LICENSE', 'README.md']},
     package_dir={'geonames': 'geonames'},
