@@ -20,7 +20,7 @@ with open('README.rst') as f:
 
 setup(
     name='geonames',
-    version='0.1.2',
+    version='0.1.3',
     long_description=readme,
     description="Geonames data parser into Shapefile/KML",
     author='Denis Carriere',
